@@ -4,7 +4,7 @@ import random
 from multiprocessing import Lock, Condition, Process
 from multiprocessing import Value
 
-SOUTH = 1
+SOUTH = 1  #tenemos coches que van en dirección sur y otros en dirección norte
 NORTH = 0
 
 NCARS = 15
@@ -23,7 +23,7 @@ class Monitor():
         self.ncarssouth = Value('i', 0)
         self.npeds = Value('i', 0)
         
-        self.ncarsnorth_waiting = Value('i', 0)
+        self.ncarsnorth_waiting = Value('i', 0) #variable condición para la cantidad de coches en dirección norte esperando
         self.ncarssouth_waiting = Value('i', 0)
         self.npeds_waiting = Value('i', 0)
 
@@ -32,15 +32,15 @@ class Monitor():
         self.no_peds = Condition(self.mutex) 
 
 
-    def are_no_carsnorth(self):
+    def are_no_carsnorth(self):  #nos dice si hay coches en dirección norte 
         return self.ncarsnorth.value == 0 and self.ncarsnorth_waiting.value == 0
     
     
-    def are_no_carssouth(self):
+    def are_no_carssouth(self):  #nos dice si hay coches en dirección sur 
         return self.ncarssouth.value == 0 and self.ncarssouth_waiting.value == 0
 
 
-    def are_no_peds(self):
+    def are_no_peds(self): #nos dice si hay caminantes 
         return self.npeds.value == 0 and self.npeds_waiting.value == 0
             
             
@@ -49,14 +49,14 @@ class Monitor():
         self.patata.value += 1
         if direction == 0: 
           self.ncarsnorth_waiting.value += 1
-          self.no_carssouth.wait_for(self.are_no_carssouth)
+          self.no_carssouth.wait_for(self.are_no_carssouth) #si la dirección es norte, debe esperar a que no haya coches en dirección sur ni caminantes 
           self.no_peds.wait_for(self.are_no_peds)
           self.ncarsnorth_waiting.value -= 1
           self.ncarsnorth.value += 1
         
         else: 
           self.ncarssouth_waiting.value += 1
-          self.no_carsnorth.wait_for(self.are_no_carsnorth)
+          self.no_carsnorth.wait_for(self.are_no_carsnorth) #si la dirección es sur, no puede haber coches en dirección norte ni caminantes 
           self.no_peds.wait_for(self.are_no_peds)
           self.ncarssouth_waiting.value -= 1
           self.ncarssouth.value += 1
@@ -70,11 +70,11 @@ class Monitor():
         if direction == 0:
           self.ncarsnorth.value -= 1
           if self.ncarsnorth.value == 0:
-            self.no_carsnorth.notify_all()
+            self.no_carsnorth.notify_all() #notifica que ya no hay coches en dirección norte
         else:
           self.ncarssouth.value -= 1
           if self.ncarssouth.value == 0:
-            self.no_carssouth.notify_all()
+            self.no_carssouth.notify_all() #notifica que los coches en dirección sur han dejado el puente
           
         self.mutex.release()
 
@@ -83,7 +83,7 @@ class Monitor():
         self.patata.value += 1
         
         self.npeds_waiting.value += 1
-        self.no_carsnorth.wait_for(self.are_no_carsnorth)
+        self.no_carsnorth.wait_for(self.are_no_carsnorth) #los caminantes deben esperar a que no haya coches 
         self.no_carssouth.wait_for(self.are_no_carssouth)
         self.npeds_waiting.value -= 1
         self.npeds.value += 1 
@@ -96,7 +96,7 @@ class Monitor():
         
         self.npeds.value -= 1
         if self.npeds.value == 0:
-          self.no_peds.notify_all()
+          self.no_peds.notify_all() #notifica que no hay caminantes en el puente
           
         self.mutex.release()
 
